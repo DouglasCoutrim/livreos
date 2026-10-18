@@ -1,0 +1,24 @@
+{
+  "name": "LivreOS – Sistema de Gestão Empresarial",
+  "short_name": "LivreOS",
+  "description": "ERP Multiempresa completo para gestão financeira, vendas, estoque e fiscal.",
+  "start_url": "./dashboard.php",
+  "display": "standalone",
+  "background_color": "#F3F5F9",
+  "theme_color": "#0E9F6E",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/livreos-icone.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/livreos-icone.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
