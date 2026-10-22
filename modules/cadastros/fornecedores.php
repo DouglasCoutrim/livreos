@@ -158,8 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // 3. EXCLUIR
     if ($acao === 'excluir') {
         $id = (int)($_POST['id'] ?? 0);
-        $db->prepare("DELETE FROM fornecedores WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
-        Session::setFlash('success', 'Fornecedor excluído com sucesso.');
+        try {
+            $db->prepare("DELETE FROM fornecedores WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
+            Session::setFlash('success', 'Fornecedor excluído com sucesso.');
+        } catch (PDOException $e) {
+            error_log('Erro ao excluir fornecedores: ' . $e->getMessage());
+            Session::setFlash('error', 'Não foi possível excluir: o registro está em uso em outros cadastros ou documentos.');
+        }
         header('Location: ' . BASE_URL . '/modules/cadastros/fornecedores.php');
         exit;
     }
