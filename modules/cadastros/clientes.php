@@ -273,10 +273,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cli = $stmtNome->fetch();
 
         if ($cli) {
-            $stmtDel = $db->prepare("DELETE FROM clientes WHERE id = :id AND empresa_id = :emp");
-            $stmtDel->execute([':id' => $id, ':emp' => $empresaId]);
-            AuditLogger::log('CLIENTE_EXCLUIR', 'Cadastros', "Excluiu o cliente #{$id} ({$cli['nome_razao']})");
-            Session::setFlash('success', 'Cliente removido com sucesso.');
+            try {
+                $stmtRef = $db->prepare("SELECT COUNT(*) FROM vendas WHERE cliente_id = :c AND empresa_id = :emp");
+                $stmtRef->execute([':c' => $id, ':emp' => $empresaId]);
+
+                if ((int)$stmtRef->fetchColumn() > 0) {
+                    Session::setFlash('error', 'Este cliente possui vendas ou orçamentos e não pode ser excluído. Inative o cadastro.');
+                } else {
+                    $stmtDel = $db->prepare("DELETE FROM clientes WHERE id = :id AND empresa_id = :emp");
+                    $stmtDel->execute([':id' => $id, ':emp' => $empresaId]);
+                    AuditLogger::log('CLIENTE_EXCLUIR', 'Cadastros', "Excluiu o cliente #{$id} ({$cli['nome_razao']})");
+                    Session::setFlash('success', 'Cliente removido com sucesso.');
+                }
+            } catch (PDOException $e) {
+                error_log('Erro ao excluir cliente: ' . $e->getMessage());
+                Session::setFlash('error', 'Não foi possível excluir: o cliente está em uso em outros registros. Inative o cadastro.');
+            }
         }
 
         header('Location: ' . BASE_URL . '/modules/cadastros/clientes.php');
