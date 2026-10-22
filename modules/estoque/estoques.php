@@ -14,13 +14,6 @@ if (!Auth::hasPermission('estoque.ver')) {
 $db = Database::getConnection();
 $empresaId = Auth::empresaId();
 
-// Helper para formulário - quantidades são inteiras
-function parseIntQty(string $val): int {
-    $limpo = str_replace(['.', ' '], '', trim($val));
-    $limpo = str_replace(',', '.', $limpo);
-    return is_numeric($limpo) ? (int)floatval($limpo) : 0;
-}
-
 // ============================================================================
 // PROCESSAMENTO DE AÇÕES (POST) - AJUSTE RÁPIDO
 // ============================================================================
@@ -42,7 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $produtoId = (int)($_POST['produto_id'] ?? 0);
         $tipo = trim($_POST['tipo_ajuste'] ?? 'entrada'); // 'entrada' ou 'saida'
-        $quantidade = parseIntQty($_POST['quantidade'] ?? '0');
+        $quantidade = Security::parseQty($_POST['quantidade'] ?? '0');
+        if (!in_array($tipo, ['entrada', 'saida'], true)) {
+            $quantidade = 0.0; // tipo inválido: não processa
+        }
         $motivo = trim($_POST['motivo'] ?? 'Ajuste Manual');
 
         if ($produtoId > 0 && $quantidade > 0) {
@@ -56,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($prod) {
                     // Verifica se há estoque suficiente em caso de saída
-                    if ($tipo === 'saida' && $prod['estoque_atual'] < $quantidade) {
+                    if ($tipo === 'saida' && (float)$prod['estoque_atual'] < $quantidade) {
                         Session::setFlash('error', 'A quantidade de saída é maior do que o estoque atual disponível.');
                         $db->rollBack();
                     } else {
@@ -72,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         // Atualiza Saldo no Produto
                         $sinal = ($tipo === 'entrada') ? '+' : '-';
-                        $stmtUp = $db->prepare("UPDATE produtos SET estoque_atual = estoque_atual $sinal :qtd WHERE id = :id");
-                        $stmtUp->execute([':qtd' => $quantidade, ':id' => $produtoId]);
+                        $stmtUp = $db->prepare("UPDATE produtos SET estoque_atual = estoque_atual $sinal :qtd WHERE id = :id AND empresa_id = :emp");
+                        $stmtUp->execute([':qtd' => $quantidade, ':id' => $produtoId, ':emp' => $empresaId]);
 
                         $db->commit();
                         AuditLogger::log('editar', 'estoque', "Ajuste de $quantidade ($tipo) no produto ID $produtoId");
@@ -106,7 +102,7 @@ $where = ["empresa_id = :emp", "ativo = 1"];
 $params = [':emp' => $empresaId];
 
 if ($busca !== '') {
-    $where[] = "(nome LIKE :b1 OR sku LIKE :b2)";
+    $where[] = "(nome LIKE :b1 OR codigo_sku LIKE :b2)";
     $params[':b1'] = "%$busca%";
     $params[':b2'] = "%$busca%";
 }
@@ -132,7 +128,7 @@ $totalPages = ceil($totalRows / $limit);
 
 // Tabela principal
 $stmtList = $db->prepare("
-    SELECT id, nome, sku, preco_custo, preco_venda, estoque_atual, estoque_minimo 
+    SELECT id, nome, codigo_sku, preco_custo, preco_venda, estoque_atual, estoque_minimo 
     FROM produtos 
     WHERE $whereClause 
     ORDER BY nome ASC 
@@ -279,19 +275,19 @@ require_once __DIR__ . '/../../includes/header.php';
                         <?php else: foreach ($produtos as $p): ?>
                             <tr>
                                 <td><b style="color: var(--text);"><?= Security::e($p['nome']) ?></b></td>
-                                <td><span class="kl" style="font-size: 13px;"><?= Security::e($p['sku'] ?: '—') ?></span></td>
+                                <td><span class="kl" style="font-size: 13px;"><?= Security::e($p['codigo_sku'] ?: '—') ?></span></td>
                                 <td style="text-align: right;"><?= Security::formatMoney((float)$p['preco_custo']) ?></td>
                                 <td style="text-align: right; font-weight:600;"><?= Security::formatMoney((float)$p['preco_venda']) ?></td>
-                                <td style="text-align: right; color: var(--muted);"><?= number_format((int)$p['estoque_minimo'], 0, ',', '.') ?></td>
+                                <td style="text-align: right; color: var(--muted);"><?= Security::formatQty($p['estoque_minimo']) ?></td>
                                 <td style="text-align: right;">
-                                    <b style="font-size: 15px; color: <?= ((int)$p['estoque_atual'] <= 0) ? '#DC2626' : (((int)$p['estoque_atual'] <= (int)$p['estoque_minimo']) ? '#B45309' : '#0B7A55') ?>">
-                                        <?= number_format((int)$p['estoque_atual'], 0, ',', '.') ?>
+                                    <b style="font-size: 15px; color: <?= ((float)$p['estoque_atual'] <= 0) ? '#DC2626' : (((float)$p['estoque_atual'] <= (float)$p['estoque_minimo']) ? '#B45309' : '#0B7A55') ?>">
+                                        <?= Security::formatQty($p['estoque_atual']) ?>
                                     </b>
                                 </td>
                                 <td>
                                     <?php
-                                        $qtd = (int)$p['estoque_atual'];
-                                        $min = (int)$p['estoque_minimo'];
+                                        $qtd = (float)$p['estoque_atual'];
+                                        $min = (float)$p['estoque_minimo'];
                                         if ($qtd <= 0) {
                                             echo '<span class="bd chip-bad">Esgotado</span>';
                                         } elseif ($qtd <= $min) {
@@ -359,7 +355,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <div class="kl" style="font-size: 11px;"><?= date('d/m/Y H:i', strtotime($m['data_movimentacao'])) ?></div>
                             </div>
                         </div>
-                        <b style="color: var(--text);"><?= number_format((int)$m['quantidade'], 0, ',', '.') ?></b>
+                        <b style="color: var(--text);"><?= Security::formatQty($m['quantidade']) ?></b>
                     </div>
                 <?php endforeach; endif; ?>
             </div>
@@ -400,7 +396,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 
                 <div class="col-12">
                     <label class="form-label-os">Quantidade *</label>
-                    <input type="number" name="quantidade" class="form-control-os" min="1" value="1" required>
+                    <input type="number" name="quantidade" class="form-control-os" min="0.01" step="0.01" value="1" required>
                 </div>
 
                 <div class="col-12">
