@@ -20,7 +20,7 @@ define('APP_VERSION', '1.0.0');
 define('DB_HOST', '127.0.0.1');
 define('DB_NAME', 'u322252451_livreos_erp');
 define('DB_USER', 'u322252451_douglasc');
-define('DB_PASS', '');
+define('DB_PASS', '#Va_Ds12');
 define('DB_CHARSET', 'utf8mb4');
 
 // Timeout de sessão em segundos (30 minutos)
