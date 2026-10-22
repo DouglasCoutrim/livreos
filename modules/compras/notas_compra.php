@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xml_file'])) {
         $xProd = (string)$prod->xProd;
         $ncm = isset($prod->NCM) ? (string)$prod->NCM : null;
         $uCom = isset($prod->uCom) ? (string)$prod->uCom : 'UN';
-        $qCom = (float)$prod->qCom;
+        $qCom = (int)$prod->qCom;
         $vUnCom = (float)$prod->vUnCom;
         $vProd = (float)$prod->vProd;
 
@@ -330,16 +330,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirmar_importacao'
                     $numDup = isset($dup->nDup) ? (string)$dup->nDup : 'NF ' . $dados['numero'];
 
                     $stmtFin = $db->prepare("
-                        INSERT INTO lancamentos_financeiros (empresa_id, conta_id, pessoa_nome, descricao, tipo, valor, data_vencimento, status)
-                        VALUES (:emp, :conta, :pessoa, :desc, 'despesa', :val, :venc, 'pendente')
+                        INSERT INTO lancamentos_financeiros
+                            (empresa_id, conta_id, cliente_fornecedor, tipo, valor, competencia, data_vencimento, documento, observacoes, a_pagar, total_val, status)
+                        VALUES
+                            (:emp, :conta, :pessoa, 'despesa', :val, :comp, :venc, :doc, :obs, :apagar, :total, 'pendente')
                     ");
                     $stmtFin->execute([
                         ':emp'    => $empresaId,
                         ':conta'  => $contaId,
                         ':pessoa' => $dados['fornecedor']['nome'],
-                        ':desc'   => "NF-e #{$dados['numero']} - Dupl. {$numDup}",
                         ':val'    => $vDup,
-                        ':venc'   => $vencDup,
+                        ':comp'   => date('Y-m-d'),
+                        ':venc'   => ($vencDup !== '' ? $vencDup : date('Y-m-d')),
+                        ':doc'    => "NF {$dados['numero']}",
+                        ':obs'    => "NF-e #{$dados['numero']} - Dupl. {$numDup}",
+                        ':apagar' => $vDup,
+                        ':total'  => $vDup,
                     ]);
                 }
             }
@@ -464,13 +470,13 @@ require_once __DIR__ . '/../../includes/header.php';
                                 </td>
                                 <td><b><?= Security::e($it['descricao']) ?></b></td>
                                 <td><?= Security::e($it['ncm']) ?> · <b><?= Security::e($it['unidade']) ?></b></td>
-                                <td><b><?= number_format($it['qtd'], 2, ',', '.') ?></b></td>
+                                <td><b><?= number_format((int)$it['qtd'], 0, ',', '.') ?></b></td>
                                 <td><?= Security::formatMoney($it['v_unit']) ?></td>
                                 <td style="text-align:right"><b><?= Security::formatMoney($it['v_total']) ?></b></td>
                                 <td>
                                     <?php if ($it['ja_existe']): ?>
                                         <span class="bd" style="background:var(--osoft);color:var(--otxt)" title="Produto já cadastrado. A quantidade será somada ao estoque atual.">
-                                            Já existe (Estoque atual: <?= number_format($it['est_atual'], 2, ',', '.') ?>)
+                                            Já existe (Estoque atual: <?= number_format((int)$it['est_atual'], 0, ',', '.') ?>)
                                         </span>
                                     <?php else: ?>
                                         <span class="bd" style="background:var(--asoft);color:var(--atxt)" title="Produto novo. Será cadastrado automaticamente ao confirmar.">

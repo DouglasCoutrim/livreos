@@ -95,7 +95,7 @@ $concentracaoPct = ($faturamentoPedidos > 0 && $topCliente) ? (($topCliente['tot
 
 // 5. Próximos Vencimentos / Atrasados
 $stmtVenc = $db->prepare("
-    SELECT pessoa_nome, valor, data_vencimento, status
+    SELECT cliente_fornecedor AS pessoa_nome, valor, data_vencimento, status
     FROM lancamentos_financeiros
     WHERE empresa_id = :emp AND status IN ('atrasado', 'pendente')
     ORDER BY data_vencimento ASC

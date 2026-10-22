@@ -1,22 +1,21 @@
 // Caminho: /assets/js/app.js
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Submenus expansíveis na Sidebar
-    document.querySelectorAll('[data-toggle="submenu"]').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
-            var group = btn.closest('.nav-group');
-            var isOpen = group.classList.contains('open');
-
-            // Fecha outros grupos abertos para manter o menu limpo
-            document.querySelectorAll('.nav-group.open').forEach(function (other) {
-                if (other !== group) other.classList.remove('open');
-            });
-
-            group.classList.toggle('open', !isOpen);
+    // 1. Recolher / expandir a sidebar (desktop) — estado salvo no navegador
+    var btnCollapse = document.getElementById('sbCollapse');
+    if (btnCollapse) {
+        btnCollapse.addEventListener('click', function () {
+            var collapsed = document.documentElement.classList.toggle('sb-collapsed');
+            try { localStorage.setItem('sbCollapsed', collapsed ? '1' : '0'); } catch (e) {}
         });
-    });
+    }
 
-    // 2. Menu Mobile (botão "Menu" na barra inferior)
+    // 2. Mantém a aba ativa visível na barra de abas (útil no celular)
+    var abaAtiva = document.querySelector('.mod-tab.on');
+    if (abaAtiva && abaAtiva.scrollIntoView) {
+        abaAtiva.scrollIntoView({ inline: 'center', block: 'nearest' });
+    }
+
+    // 3. Menu Mobile (botão "Menu" na barra inferior)
     var sidebar = document.getElementById('appSidebar');
     var backdrop = document.getElementById('sbBackdrop');
     var btnMobileMenu = document.getElementById('btnMobileMenu');
@@ -30,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnMobileMenu) btnMobileMenu.addEventListener('click', toggleMobileMenu);
     if (backdrop) backdrop.addEventListener('click', toggleMobileMenu);
 
-    // 3. Auto-fechar Toasts após 4 segundos
+    // 4. Auto-fechar Toasts após 4 segundos
     var toast = document.getElementById('appToast');
     if (toast) {
         setTimeout(function () {
@@ -40,7 +39,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 4000);
     }
 
-    // 4. Máscaras de Formulário (CPF/CNPJ, Telefone, CEP, Moeda)
+    // 5. Máscaras de Formulário (CPF/CNPJ, Telefone, CEP, Moeda)
     document.addEventListener('input', function (e) {
         var el = e.target;
         if (!el.dataset || !el.dataset.mask) return;
@@ -77,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 5. Registro do Service Worker (PWA)
+    // 6. Registro do Service Worker (PWA)
     if ('serviceWorker' in navigator && window.LIVREOS_BASE_URL) {
         navigator.serviceWorker.register(window.LIVREOS_BASE_URL + '/service-worker.js').catch(function () {});
     }

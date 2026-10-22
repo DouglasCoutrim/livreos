@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $precoCusto    = parseDecimalBr($_POST['preco_custo'] ?? '0,00');
         $margemLucro   = parseDecimalBr($_POST['margem_lucro'] ?? '0,00');
         $precoVenda    = parseDecimalBr($_POST['preco_venda'] ?? '0,00');
-        $estoqueAtual  = parseDecimalBr($_POST['estoque_atual'] ?? '0,00');
-        $estoqueMinimo = parseDecimalBr($_POST['estoque_minimo'] ?? '0,00');
+        $estoqueAtual  = (int)($_POST['estoque_atual'] ?? 0);
+        $estoqueMinimo = (int)($_POST['estoque_minimo'] ?? 0);
         $pesoLiquido   = parseDecimalBr($_POST['peso_liquido'] ?? '0,00');
         $pesoBruto     = parseDecimalBr($_POST['peso_bruto'] ?? '0,00');
 
@@ -549,7 +549,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
                             <td>
                                 <div>
-                                    <b><?= number_format($estAtual, 2, ',', '.') ?></b> <?= Security::e($p['unidade']) ?>
+                                    <b><?= number_format($estAtual, 0, ',', '.') ?></b> <?= Security::e($p['unidade']) ?>
                                     <span class="kl">(Mín: <?= number_format($estMin, 0, ',', '.') ?>)</span>
                                 </div>
                                 <span class="bd" style="background:<?= $corEstoque ?>;color:<?= $txtEstoque ?>;margin-top:3px">
@@ -696,12 +696,12 @@ require_once __DIR__ . '/../../includes/header.php';
 
                 <div class="col-md-3">
                     <label class="form-label-os" for="prd_estoque_atual">Estoque Atual</label>
-                    <input type="text" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" data-mask="money" value="0,00">
+                    <input type="number" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" value="0">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label-os" for="prd_estoque_minimo">Estoque Mínimo (Alerta)</label>
-                    <input type="text" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" data-mask="money" value="0,00">
+                    <input type="number" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" value="0">
                 </div>
 
                 <div class="col-md-4">
@@ -858,8 +858,8 @@ function abrirModalProduto() {
     document.getElementById('prd_preco_custo').value = '0,00';
     document.getElementById('prd_margem_lucro').value = '0,00';
     document.getElementById('prd_preco_venda').value = '0,00';
-    document.getElementById('prd_estoque_atual').value = '0,00';
-    document.getElementById('prd_estoque_minimo').value = '0,00';
+    document.getElementById('prd_estoque_atual').value = '0';
+    document.getElementById('prd_estoque_minimo').value = '0';
     document.getElementById('prd_peso_liquido').value = '0,00';
     document.getElementById('prd_peso_bruto').value = '0,00';
     document.getElementById('prd_cfop_interno').value = '5102';
@@ -881,8 +881,8 @@ function editarProduto(p) {
     document.getElementById('prd_preco_custo').value = formatarMoedaJs(p.preco_custo);
     document.getElementById('prd_margem_lucro').value = formatarMoedaJs(p.margem_lucro);
     document.getElementById('prd_preco_venda').value = formatarMoedaJs(p.preco_venda);
-    document.getElementById('prd_estoque_atual').value = formatarMoedaJs(p.estoque_atual);
-    document.getElementById('prd_estoque_minimo').value = formatarMoedaJs(p.estoque_minimo);
+    document.getElementById('prd_estoque_atual').value = Math.floor(p.estoque_atual || 0);
+    document.getElementById('prd_estoque_minimo').value = Math.floor(p.estoque_minimo || 0);
     document.getElementById('prd_peso_liquido').value = formatarMoedaJs(p.peso_liquido);
     document.getElementById('prd_peso_bruto').value = formatarMoedaJs(p.peso_bruto);
 
