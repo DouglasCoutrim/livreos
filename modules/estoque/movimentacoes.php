@@ -26,7 +26,7 @@ $where = ["m.empresa_id = :emp"];
 $params = [':emp' => $empresaId];
 
 if ($busca !== '') {
-    $where[] = "(p.nome LIKE :b1 OR p.sku LIKE :b2 OR m.motivo LIKE :b3)";
+    $where[] = "(p.nome LIKE :b1 OR p.codigo_sku LIKE :b2 OR m.motivo LIKE :b3)";
     $params[':b1'] = "%$busca%";
     $params[':b2'] = "%$busca%";
     $params[':b3'] = "%$busca%";
@@ -64,7 +64,7 @@ $stmtList = $db->prepare("
     SELECT 
         m.*, 
         p.nome AS produto_nome, 
-        p.sku 
+        p.codigo_sku 
     FROM estoque_movimentacoes m
     LEFT JOIN produtos p ON m.produto_id = p.id
     WHERE $whereClause 
@@ -125,7 +125,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="kpi-label">Volume de Entradas</div>
             <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
         </div>
-        <div class="kpi-value"><?= number_format((int)$kpis['volume_entradas'], 0, ',', '.') ?></div>
+        <div class="kpi-value"><?= Security::formatQty($kpis['volume_entradas']) ?></div>
 <div class="kpi-variation">Unidades somadas ao estoque</div>
 </div>
 
@@ -134,7 +134,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="kpi-label">Volume de Saídas / Perdas</div>
 <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline></svg></div>
 </div>
-<div class="kpi-value"><?= number_format((int)$kpis['volume_saidas'], 0, ',', '.') ?></div>
+<div class="kpi-value"><?= Security::formatQty($kpis['volume_saidas']) ?></div>
 <div class="kpi-variation">Unidades subtraídas do estoque</div>
 </div>
 
@@ -143,7 +143,7 @@ require_once __DIR__ . '/../../includes/header.php';
 <div class="kpi-label">Ajustes de Inventário</div>
 <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></div>
 </div>
-<div class="kpi-value"><?= number_format((int)$kpis['volume_ajustes'], 0, ',', '.') ?></div>
+<div class="kpi-value"><?= Security::formatQty($kpis['volume_ajustes']) ?></div>
 <div class="kpi-variation">Divergências ou acertos manuais</div>
 </div>
 </div>
@@ -205,7 +205,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         </td>
                         <td>
                             <div style="font-weight: 600; color: var(--text);"><?= Security::e($m['produto_nome']) ?></div>
-                            <div class="kl" style="font-size: 12px;">SKU: <?= Security::e($m['sku'] ?: '—') ?></div>
+                            <div class="kl" style="font-size: 12px;">SKU: <?= Security::e($m['codigo_sku'] ?: '—') ?></div>
                         </td>
                         <td>
                             <?php if ($m['tipo'] === 'entrada'): ?>
@@ -218,7 +218,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         </td>
                         <td style="text-align: right;">
                             <b style="font-size: 15px; color: <?= ($m['tipo'] === 'saida') ? '#DC2626' : '#0B7A55' ?>;">
-                                <?= ($m['tipo'] === 'saida' ? '-' : '+') . number_format((int)$m['quantidade'], 0, ',', '.') ?>
+                                <?= ($m['tipo'] === 'saida' ? '-' : '+') . Security::formatQty($m['quantidade']) ?>
                             </b>
                         </td>
                         <td style="text-align: right; color: var(--text);">
