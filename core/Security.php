@@ -37,6 +37,28 @@ class Security
         return hash_equals($_SESSION['csrf_token'], $token);
     }
 
+    // Converte quantidade digitada ("1,5", "1.5" ou "1.234,5") em float com 2 casas
+    public static function parseQty(mixed $value): float
+    {
+        $s = trim((string)$value);
+        if ($s === '') {
+            return 0.0;
+        }
+        if (str_contains($s, ',')) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        }
+        return is_numeric($s) ? round((float)$s, 2) : 0.0;
+    }
+
+    // Formata quantidade: inteiros sem casas (12), fracionados com 2 (1,50)
+    public static function formatQty(float|int|string|null $value): string
+    {
+        $v = round((float)$value, 2);
+        $dec = (floor($v) == $v) ? 0 : 2;
+        return number_format($v, $dec, ',', '.');
+    }
+
     // Formata moeda para padrão brasileiro R$
     public static function formatMoney(float|int|string $value): string
     {
