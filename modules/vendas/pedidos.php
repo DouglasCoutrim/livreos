@@ -44,13 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
 
         } elseif ($acao === 'excluir') {
             if (!Auth::hasPermission('vendas.excluir')) throw new Exception('Sem permissão para excluir.');
-            $stmt = $db->prepare("DELETE FROM vendas WHERE id = :id AND empresa_id = :emp");
+            $stmt = $db->prepare("DELETE FROM vendas WHERE id = :id AND empresa_id = :emp AND status != 'faturado'");
             $stmt->execute([':id' => $id, ':emp' => $empresaId]);
             if ($stmt->rowCount() > 0) {
                 AuditLogger::log('excluir', 'vendas', "Exclusão permanente do pedido ID {$id}");
                 echo json_encode(['status' => 'success', 'message' => 'Pedido excluído permanentemente.']); exit;
             }
-            throw new Exception('Erro ao tentar excluir o pedido.');
+            throw new Exception('Pedidos faturados não podem ser excluídos. Cancele ou estorne antes.');
 
         } elseif ($acao === 'faturar') {
             if (!Auth::hasPermission('vendas.faturar')) throw new Exception('Sem permissão para faturar.');
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['ajax_list'])) {
     $stmtCount->execute($params);
     $totalPages = ceil((int)$stmtCount->fetchColumn() / $limit);
 
-    $stmtList =$db->prepare("SELECT v.id, v.data_emissao, v.valor_liquido, v.status, v.condicao_pagamento, c.nome_razao as cliente_nome, vend.nome_fantasia as vendedor_nome FROM vendas v LEFT JOIN clientes c ON v.cliente_id = c.id LEFT JOIN vendedores vend ON v.vendedor_id = vend.id WHERE $whereClause ORDER BY v.id DESC LIMIT $limit OFFSET$offset");
+    $stmtList =$db->prepare("SELECT v.id, v.data_emissao, v.valor_liquido, v.status, v.condicao_pagamento, c.nome_razao as cliente_nome, vend.nome_fantasia as vendedor_nome FROM vendas v LEFT JOIN clientes c ON v.cliente_id = c.id LEFT JOIN vendedores vend ON v.vendedor_id = vend.id WHERE $whereClause ORDER BY v.id DESC LIMIT $limit OFFSET $offset");
     $stmtList->execute($params);
     $pedidos =$stmtList->fetchAll(PDO::FETCH_ASSOC);
 
