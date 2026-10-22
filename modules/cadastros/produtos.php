@@ -48,8 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $precoCusto    = parseDecimalBr($_POST['preco_custo'] ?? '0,00');
         $margemLucro   = parseDecimalBr($_POST['margem_lucro'] ?? '0,00');
         $precoVenda    = parseDecimalBr($_POST['preco_venda'] ?? '0,00');
-        $estoqueAtual  = (int)($_POST['estoque_atual'] ?? 0);
-        $estoqueMinimo = (int)($_POST['estoque_minimo'] ?? 0);
+        $estoqueAtual  = max(0.0, Security::parseQty($_POST['estoque_atual'] ?? '0'));
+        $estoqueMinimo = max(0.0, Security::parseQty($_POST['estoque_minimo'] ?? '0'));
         $pesoLiquido   = parseDecimalBr($_POST['peso_liquido'] ?? '0,00');
         $pesoBruto     = parseDecimalBr($_POST['peso_bruto'] ?? '0,00');
 
@@ -229,10 +229,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $prod = $stmtNome->fetch();
 
         if ($prod) {
-            $stmtDel = $db->prepare("DELETE FROM produtos WHERE id = :id AND empresa_id = :emp");
-            $stmtDel->execute([':id' => $id, ':emp' => $empresaId]);
-            AuditLogger::log('PRODUTO_EXCLUIR', 'Cadastros', "Excluiu o produto #{$id} ({$prod['codigo_sku']} - {$prod['nome']})");
-            Session::setFlash('success', 'Produto excluído com sucesso.');
+            try {
+                // Produto com vendas ou histórico de estoque não pode ser apagado (preserva o histórico)
+                $stmtRef = $db->prepare("
+                    SELECT
+                        (SELECT COUNT(*) FROM vendas_itens vi INNER JOIN vendas v ON v.id = vi.venda_id WHERE vi.produto_id = :p1 AND v.empresa_id = :e1)
+                      + (SELECT COUNT(*) FROM estoque_movimentacoes WHERE produto_id = :p2 AND empresa_id = :e2) AS refs
+                ");
+                $stmtRef->execute([':p1' => $id, ':e1' => $empresaId, ':p2' => $id, ':e2' => $empresaId]);
+
+                if ((int)$stmtRef->fetchColumn() > 0) {
+                    Session::setFlash('error', 'Este produto possui vendas ou movimentações de estoque e não pode ser excluído. Use "Inativar".');
+                } else {
+                    $stmtDel = $db->prepare("DELETE FROM produtos WHERE id = :id AND empresa_id = :emp");
+                    $stmtDel->execute([':id' => $id, ':emp' => $empresaId]);
+                    AuditLogger::log('PRODUTO_EXCLUIR', 'Cadastros', "Excluiu o produto #{$id} ({$prod['codigo_sku']} - {$prod['nome']})");
+                    Session::setFlash('success', 'Produto excluído com sucesso.');
+                }
+            } catch (PDOException $e) {
+                error_log('Erro ao excluir produto: ' . $e->getMessage());
+                Session::setFlash('error', 'Não foi possível excluir: o produto está em uso (notas de compra, vendas etc.). Use "Inativar".');
+            }
         }
 
         header('Location: ' . BASE_URL . '/modules/cadastros/produtos.php');
@@ -696,12 +713,12 @@ require_once __DIR__ . '/../../includes/header.php';
 
                 <div class="col-md-3">
                     <label class="form-label-os" for="prd_estoque_atual">Estoque Atual</label>
-                    <input type="number" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" value="0">
+                    <input type="number" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" min="0" step="0.01" value="0">
                 </div>
 
                 <div class="col-md-4">
                     <label class="form-label-os" for="prd_estoque_minimo">Estoque Mínimo (Alerta)</label>
-                    <input type="number" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" value="0">
+                    <input type="number" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" min="0" step="0.01" value="0">
                 </div>
 
                 <div class="col-md-4">
@@ -881,8 +898,8 @@ function editarProduto(p) {
     document.getElementById('prd_preco_custo').value = formatarMoedaJs(p.preco_custo);
     document.getElementById('prd_margem_lucro').value = formatarMoedaJs(p.margem_lucro);
     document.getElementById('prd_preco_venda').value = formatarMoedaJs(p.preco_venda);
-    document.getElementById('prd_estoque_atual').value = Math.floor(p.estoque_atual || 0);
-    document.getElementById('prd_estoque_minimo').value = Math.floor(p.estoque_minimo || 0);
+    document.getElementById('prd_estoque_atual').value = parseFloat(p.estoque_atual || 0);
+    document.getElementById('prd_estoque_minimo').value = parseFloat(p.estoque_minimo || 0);
     document.getElementById('prd_peso_liquido').value = formatarMoedaJs(p.peso_liquido);
     document.getElementById('prd_peso_bruto').value = formatarMoedaJs(p.peso_bruto);
 
