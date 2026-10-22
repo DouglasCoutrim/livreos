@@ -97,8 +97,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($acao === 'excluir') {
         $id = (int)($_POST['id'] ?? 0);
-        $db->prepare("DELETE FROM transportadoras WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
-        Session::setFlash('success', 'Transportadora excluída.');
+        try {
+            $db->prepare("DELETE FROM transportadoras WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
+            Session::setFlash('success', 'Transportadora excluída.');
+        } catch (PDOException $e) {
+            error_log('Erro ao excluir transportadoras: ' . $e->getMessage());
+            Session::setFlash('error', 'Não foi possível excluir: o registro está em uso em outros cadastros ou documentos.');
+        }
         header('Location: ' . BASE_URL . '/modules/cadastros/transportadoras.php');
         exit;
     }
