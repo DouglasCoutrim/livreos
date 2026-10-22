@@ -39,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $clienteId = (int)($_POST['cliente_id'] ?? 0);
     $vendedorId = !empty($_POST['vendedor_id']) ? (int)$_POST['vendedor_id'] : null;
     $status = trim($_POST['status'] ?? 'pendente');
+    if (!in_array($tipo, ['pedido', 'orcamento'], true)) { $tipo = 'pedido'; }
+    if (!in_array($status, ['rascunho', 'pendente', 'aprovado'], true)) { $status = 'pendente'; }
     $dataEmissao = trim($_POST['data_emissao'] ?? date('Y-m-d'));
     $dataValidade = trim($_POST['data_validade'] ?? '') ?: null;
     $condicaoPgto = trim($_POST['condicao_pagamento'] ?? '') ?: null;
@@ -63,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             for ($i = 0; $i < count($arrProdutos); $i++) {
                 $pId = (int)$arrProdutos[$i];
-                $qtd = (int)($arrQtds[$i] ?? 0);
+                $qtd = Security::parseQty($arrQtds[$i] ?? '0');
                 $vUnit = parseVendasNum($arrValores[$i] ?? '0');
                 
                 if ($pId > 0 && $qtd > 0) {
@@ -83,6 +85,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (empty($itensProcessados)) {
                 throw new Exception("Nenhum item válido com quantidade informada.");
+            }
+
+            // Segurança multiempresa: cliente, vendedor, produtos e a própria venda devem ser da empresa logada
+            $stmtChk = $db->prepare("SELECT COUNT(*) FROM clientes WHERE id = :id AND empresa_id = :emp");
+            $stmtChk->execute([':id' => $clienteId, ':emp' => $empresaId]);
+            if ((int)$stmtChk->fetchColumn() === 0) {
+                throw new Exception('Cliente inválido.');
+            }
+
+            if ($vendedorId !== null) {
+                $stmtChk = $db->prepare("SELECT COUNT(*) FROM vendedores WHERE id = :id AND empresa_id = :emp");
+                $stmtChk->execute([':id' => $vendedorId, ':emp' => $empresaId]);
+                if ((int)$stmtChk->fetchColumn() === 0) {
+                    throw new Exception('Vendedor inválido.');
+                }
+            }
+
+            $idsProd = array_values(array_unique(array_column($itensProcessados, 'produto_id')));
+            $marcas = implode(',', array_fill(0, count($idsProd), '?'));
+            $stmtChk = $db->prepare("SELECT COUNT(*) FROM produtos WHERE empresa_id = ? AND id IN ($marcas)");
+            $stmtChk->execute(array_merge([$empresaId], $idsProd));
+            if ((int)$stmtChk->fetchColumn() !== count($idsProd)) {
+                throw new Exception('Um dos produtos informados é inválido.');
+            }
+
+            if ($vendaId > 0) {
+                $stmtChk = $db->prepare("SELECT status FROM vendas WHERE id = :id AND empresa_id = :emp FOR UPDATE");
+                $stmtChk->execute([':id' => $vendaId, ':emp' => $empresaId]);
+                $statusAtual = $stmtChk->fetchColumn();
+                if ($statusAtual === false) {
+                    throw new Exception('Venda não encontrada.');
+                }
+                if ($statusAtual === 'faturado') {
+                    throw new Exception('Pedidos faturados não podem ser editados.');
+                }
             }
 
             if ($vendaId > 0) {
@@ -133,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) {
             if ($db->inTransaction()) $db->rollBack();
             error_log("Erro ao salvar venda: " . $e->getMessage());
-            Session::setFlash('error', 'Erro ao salvar: ' . $e->getMessage());
+            Session::setFlash('error', ($e instanceof PDOException) ? 'Erro ao salvar no banco de dados. Tente novamente.' : 'Erro ao salvar: ' . $e->getMessage());
         }
     } else {
         Session::setFlash('error', 'Selecione um cliente e adicione pelo menos um item.');
@@ -151,7 +188,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($pId)) {
             $itensVenda[] = [
                 'produto_id' => (int)$pId,
-                'quantidade' => (int)($arrQtds[$i] ?? 0),
+                'quantidade' => Security::parseQty($arrQtds[$i] ?? '0'),
                 'valor_unitario' => parseVendasNum($arrValores[$i] ?? '0'),
             ];
         }
@@ -196,7 +233,7 @@ $vendedores = $db->prepare("SELECT id, nome_fantasia FROM vendedores WHERE empre
 $vendedores->execute([':emp' => $empresaId]);
 $listaVendedores = $vendedores->fetchAll(PDO::FETCH_ASSOC);
 
-$produtos = $db->prepare("SELECT id, nome, sku, preco_venda, estoque_atual FROM produtos WHERE empresa_id = :emp AND ativo = 1 ORDER BY nome ASC");
+$produtos = $db->prepare("SELECT id, nome, codigo_sku, preco_venda, estoque_atual FROM produtos WHERE empresa_id = :emp AND ativo = 1 ORDER BY nome ASC");
 $produtos->execute([':emp' => $empresaId]);
 $listaProdutos = $produtos->fetchAll(PDO::FETCH_ASSOC);
 
@@ -353,7 +390,7 @@ require_once __DIR__ . '/../../includes/header.php';
                     <option value="">Selecione...</option>
                     <?php foreach ($listaProdutos as $p): ?>
                         <option value="<?= $p['id'] ?>" data-preco="<?= $p['preco_venda'] ?>" data-estoque="<?= $p['estoque_atual'] ?>">
-                            <?= Security::e($p['nome']) ?> <?= $p['sku'] ? "({$p['sku']})" : '' ?>
+                            <?= Security::e($p['nome']) ?> <?= $p['codigo_sku'] ? '(' . Security::e($p['codigo_sku']) . ')' : '' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -362,7 +399,7 @@ require_once __DIR__ . '/../../includes/header.php';
                 <span class="kl span-estoque">0</span>
             </td>
             <td style="text-align: center;">
-                <input type="number" name="quantidade[]" class="form-control-os input-qtd" min="1" step="1" value="1" style="text-align: center; width: 100px; margin: 0 auto;" required>
+                <input type="number" name="quantidade[]" class="form-control-os input-qtd" min="0.01" step="0.01" value="1" style="text-align: center; width: 100px; margin: 0 auto;" required>
             </td>
             <td>
                 <input type="text" name="valor_unitario[]" class="form-control-os input-valor" data-mask="money" value="0,00" style="text-align: right;" required>
@@ -395,7 +432,7 @@ function selecionarProduto(selectElem) {
         const preco = parseFloat(option.getAttribute('data-preco')) || 0;
         const estoque = parseFloat(option.getAttribute('data-estoque')) || 0;
         
-        tr.querySelector('.span-estoque').textContent = Math.floor(estoque); 
+        tr.querySelector('.span-estoque').textContent = Number(estoque).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
         
         const inputValor = tr.querySelector('.input-valor');
         if (parseMoneyJS(inputValor.value) === 0) {
@@ -412,8 +449,15 @@ function calcularLinha(elem) {
     const qtdStr = tr.querySelector('.input-qtd').value;
     const valStr = tr.querySelector('.input-valor').value;
     
-    const qtd = parseInt(qtdStr, 10) || 0;
-    tr.querySelector('.input-qtd').value = qtd; // Garante que o campo visual seja inteiro
+    const qtd = parseFloat(String(qtdStr).replace(',', '.')) || 0;
+
+    // Aviso visual (não bloqueia): quantidade acima do estoque disponível
+    const optSel = tr.querySelector('.select-produto').selectedOptions[0];
+    const inputQ = tr.querySelector('.input-qtd');
+    const estDisp = (optSel && optSel.value !== '') ? (parseFloat(optSel.getAttribute('data-estoque')) || 0) : null;
+    const acima = (estDisp !== null && qtd > estDisp);
+    inputQ.style.borderColor = acima ? '#B45309' : '';
+    inputQ.title = acima ? 'Quantidade acima do estoque disponível (' + estDisp.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ')' : '';
     const val = parseMoneyJS(valStr);
     const subtotal = qtd * val;
     
@@ -480,7 +524,7 @@ function adicionarItem(prodId = null, qtd = 1, vUnit = '0,00') {
     if (prodId !== null) {
         const select = tr.querySelector('.select-produto');
         select.value = prodId;
-        tr.querySelector('.input-qtd').value = parseInt(qtd, 10);
+        tr.querySelector('.input-qtd').value = parseFloat(qtd) || 1;
         tr.querySelector('.input-valor').value = vUnit;
         selecionarProduto(select);
     }
@@ -514,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (itensSalvos.length > 0) {
         itensSalvos.forEach(it => {
-            const qtdInt = Math.floor(parseFloat(it.quantidade));
+            const qtdInt = parseFloat(it.quantidade) || 1;
             const valStr = formatadorMoeda.format(it.valor_unitario);
             adicionarItem(it.produto_id, qtdInt, valStr);
         });
