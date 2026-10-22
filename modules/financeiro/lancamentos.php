@@ -35,6 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $acao = $_POST['acao'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
 
+    if (in_array($acao, ['estornar', 'cancelar', 'excluir'], true) && !Auth::hasPermission('financeiro.criar')) {
+        Session::setFlash('error', 'Sem permissão para esta ação.');
+        header('Location: ' . BASE_URL . '/modules/financeiro/lancamentos.php');
+        exit;
+    }
+
     if ($acao === 'quitar') {
         if (!Auth::hasPermission('financeiro.criar')) {
             Session::setFlash('error', 'Sem permissão para realizar baixas.');
@@ -48,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($lancamento && !in_array($lancamento['status'], ['pago', 'cancelado'])) {
             $dataQuitacao = trim($_POST['data_quitacao'] ?? date('Y-m-d'));
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dataQuitacao)) {
+                $dataQuitacao = date('Y-m-d');
+            }
             $formaPgto = trim($_POST['forma_pagamento'] ?? $lancamento['forma_pagamento']);
             $multa = parseMoedaLocal($_POST['multa_val'] ?? '0');
             $juros = parseMoedaLocal($_POST['juros_val'] ?? '0');
