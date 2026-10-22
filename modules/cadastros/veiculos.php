@@ -83,8 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($acao === 'excluir') {
         $id = (int)($_POST['id'] ?? 0);
-        $db->prepare("DELETE FROM veiculos WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
-        Session::setFlash('success', 'Veículo excluído.');
+        try {
+            $db->prepare("DELETE FROM veiculos WHERE id = :id AND empresa_id = :emp")->execute([':id' => $id, ':emp' => $empresaId]);
+            Session::setFlash('success', 'Veículo excluído.');
+        } catch (PDOException $e) {
+            error_log('Erro ao excluir veiculos: ' . $e->getMessage());
+            Session::setFlash('error', 'Não foi possível excluir: o registro está em uso em outros cadastros ou documentos.');
+        }
         header('Location: ' . BASE_URL . '/modules/cadastros/veiculos.php');
         exit;
     }
