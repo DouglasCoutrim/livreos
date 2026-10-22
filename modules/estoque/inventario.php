@@ -14,13 +14,6 @@ if (!Auth::hasPermission('estoque.editar')) {
 $db = Database::getConnection();
 $empresaId = Auth::empresaId();
 
-// Helper para conversão - quantidades são inteiras
-function parseIntQtyIn(string $val): int {
-    $limpo = str_replace(['.', ' '], '', trim($val));
-    $limpo = str_replace(',', '.', $limpo);
-    return is_numeric($limpo) ? (int)floatval($limpo) : 0;
-}
-
 // ============================================================================
 // PROCESSAMENTO DO INVENTÁRIO (POST EM LOTE)
 // ============================================================================
@@ -53,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (trim($qtdStr) === '') continue; // Ignora os campos deixados em branco
                     
                     $prodId = (int)$prodId;
-                    $novaQtd = parseIntQtyIn($qtdStr);
+                    $novaQtd = max(0.0, Security::parseQty($qtdStr));
                     
                     $stmtBusca->execute([':id' => $prodId, ':emp' => $empresaId]);
                     $prod = $stmtBusca->fetch(PDO::FETCH_ASSOC);
@@ -118,7 +111,7 @@ $where = ["empresa_id = :emp", "ativo = 1"];
 $params = [':emp' => $empresaId];
 
 if ($busca !== '') {
-    $where[] = "(nome LIKE :b1 OR sku LIKE :b2)";
+    $where[] = "(nome LIKE :b1 OR codigo_sku LIKE :b2)";
     $params[':b1'] = "%$busca%"; $params[':b2'] = "%$busca%";
 }
 if ($fStatus === 'zerado') {
@@ -132,7 +125,7 @@ $whereClause = implode(" AND ", $where);
 // Sem paginação rígida (inventário costuma carregar muitos itens), limitando a 150 por tela para não travar
 $limit = 150; 
 $stmtList = $db->prepare("
-    SELECT id, nome, sku, preco_custo, estoque_atual 
+    SELECT id, nome, codigo_sku, preco_custo, estoque_atual 
     FROM produtos 
     WHERE $whereClause 
     ORDER BY nome ASC 
@@ -249,11 +242,11 @@ require_once __DIR__ . '/../../includes/header.php';
                             <td class="kl"><?= $p['id'] ?></td>
                             <td>
                                 <div style="font-weight: 600; color: var(--text);"><?= Security::e($p['nome']) ?></div>
-                                <div class="kl" style="font-size: 12px;"><?= Security::e($p['sku'] ?: 'Sem SKU') ?></div>
+                                <div class="kl" style="font-size: 12px;"><?= Security::e($p['codigo_sku'] ?: 'Sem SKU') ?></div>
                             </td>
                             <td style="text-align: right; font-size: 16px;">
-                                <b data-sis="<?= (int)$p['estoque_atual'] ?>" id="sis_<?= $p['id'] ?>">
-                                    <?= number_format((int)$p['estoque_atual'], 0, ',', '.') ?>
+                                <b data-sis="<?= (float)$p['estoque_atual'] ?>" id="sis_<?= $p['id'] ?>">
+                                    <?= Security::formatQty($p['estoque_atual']) ?>
                                 </b>
                             </td>
                             <td style="text-align: right; background: var(--primary-soft);">
@@ -261,7 +254,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                    name="contagem[<?= $p['id'] ?>]" 
                                    class="form-control-os input-contagem" 
                                    data-id="<?= $p['id'] ?>"
-                                   min="0"
+                                   min="0" step="0.01"
                                    placeholder="—" 
                                    style="text-align: right; font-weight: bold; color: var(--primary-strong); border-color: var(--primary);">
                             </td>
@@ -298,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const bSis = document.getElementById('sis_' + id);
     
     const sisStr = bSis.getAttribute('data-sis');
-    const qtdSistema = parseInt(sisStr, 10);
+    const qtdSistema = parseFloat(sisStr) || 0;
     
     const valStr = el.value.trim();
     if (valStr === '') {
@@ -310,17 +303,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    const qtdContada = parseInt(valStr, 10) || 0;
+    const qtdContada = parseFloat(valStr.replace(',', '.')) || 0;
     const diff = qtdContada - qtdSistema;
 
-    if (Math.abs(diff) < 1) {
+    if (Math.abs(diff) < 0.005) {
         spanDiff.textContent = 'OK';
         spanDiff.className = 'bd chip-info'; // Cinza/Neutro
     } else if (diff > 0) {
-        spanDiff.textContent = '+' + diff.toLocaleString('pt-BR');
+        spanDiff.textContent = '+' + diff.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
         spanDiff.className = 'bd chip-ok'; // Verde (Sobra)
     } else {
-        spanDiff.textContent = diff.toLocaleString('pt-BR');
+        spanDiff.textContent = diff.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
         spanDiff.className = 'bd chip-bad'; // Vermelho (Falta)
     }
 }
@@ -331,9 +324,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const valStr = input.value.trim();
         if (valStr !== '') {
             const id = input.getAttribute('data-id');
-            const qtdSistema = parseInt(document.getElementById('sis_' + id).getAttribute('data-sis'), 10);
-            const qtdContada = parseInt(valStr, 10) || 0;
-            if (Math.abs(qtdContada - qtdSistema) >= 1) {
+            const qtdSistema = parseFloat(document.getElementById('sis_' + id).getAttribute('data-sis')) || 0;
+            const qtdContada = parseFloat(valStr.replace(',', '.')) || 0;
+            if (Math.abs(qtdContada - qtdSistema) >= 0.005) {
                 count++;
             }
         }
