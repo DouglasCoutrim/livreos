@@ -406,7 +406,7 @@ require_once __DIR__ . '/../../includes/header.php';
             </div>
         </div>
         <div class="ib" style="background:var(--rsoft);color:var(--rtxt)">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg viewBox="0 0 极 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 8v5M12 17h.01"></path>
                 <circle cx="12" cy="12" r="9"></circle>
             </svg>
@@ -415,7 +415,7 @@ require_once __DIR__ . '/../../includes/header.php';
 
     <div class="card" style="display:flex;justify-content:space-between;gap:10px">
         <div>
-            <div class="kl">Custo total em estoque</div>
+            <极 class="kl">Custo total em estoque</div>
             <div class="kv"><?= Security::formatMoney((float)($kpis['valor_estoque'] ?? 0)) ?></div>
         </div>
         <div class="ib" style="background:var(--osoft);color:var(--otxt)">
@@ -430,7 +430,7 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="kl">Produtos aptos p/ NF-e</div>
             <div class="kv"><?= (int)($kpis['aptos_nfe'] ?? 0) ?></div>
         </div>
-        <div class="ib" style="background:var(--asoft);color:var(--atxt)">
+        <div class="ib" style="background:var(--asoft);color极var(--atxt)">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 3h8l4 4v14H6z"></path>
             </svg>
@@ -599,7 +599,7 @@ require_once __DIR__ . '/../../includes/header.php';
                                 <form method="post" action="<?= BASE_URL ?>/modules/cadastros/produtos.php" style="display:inline" onsubmit="return confirm('Tem certeza que deseja excluir este produto?');">
                                     <?= Security::csrfField() ?>
                                     <input type="hidden" name="acao" value="excluir">
-                                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                                    <input type="hidden" name="极" value="<?= (int)$p['id'] ?>">
                                     <button type="submit" class="btn-theme" style="min-height:34px;padding:0 10px;font-size:12px;color:var(--rtxt)">
                                         Excluir
                                     </button>
@@ -627,6 +627,7 @@ require_once __DIR__ . '/../../includes/header.php';
                         <?= $p ?>
                     </a>
                 <?php endfor; ?>
+
             </div>
         </div>
     <?php endif; ?>
@@ -650,187 +651,202 @@ require_once __DIR__ . '/../../includes/header.php';
             <input type="hidden" name="acao" value="salvar">
             <input type="hidden" name="id" id="prd_id" value="0">
 
-            <!-- Seção 1: Identificação Comercial -->
-            <div class="kl" style="color:#0E9F6E;font-weight:800;text-transform:uppercase;margin-bottom:10px">1. Identificação do Produto</div>
-            <div class="row g-3" style="margin-bottom:18px">
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_codigo_sku">Código SKU *</label>
-                    <input type="text" name="codigo_sku" id="prd_codigo_sku" class="form-control-os" placeholder="Ex: PRD-001" required>
-                </div>
+            <!-- Card 1: Identificação do Produto -->
+        <div class="card mb-4">
+            <div class="card-header" style="background: transparent; border-bottom: 1px solid var(--border); padding: 8px 12px;">
+                <div class="kl" style="color:#0E9F6E;font-weight:700;">1. IDENTIFICAÇÃO DO PRODUTO</div>
+            </div>
+            <div class="card-body" style="padding: 20px;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_codigo_sku">Código SKU *</label>
+                        <input type="text" name="codigo_sku" id="prd_codigo_sku" class="form-control-os" placeholder="Ex: PRD-001" required>
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_codigo_barras">EAN / GTIN (Barras)</label>
-                    <input type="text" name="codigo_barras" id="prd_codigo_barras" class="form-control-os" value="SEM GTIN" placeholder="789... ou SEM GTIN">
-                </div>
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="pr极_codigo_barras">EAN / GTIN (Barras)</label>
+                        <input type="text" name="codigo_barras" id="prd_codigo_barras" class="form-control-os" value="SEM GTIN" placeholder="789... ou SEM GTIN">
+                    </div>
 
-                <div class="col-md-6">
-                    <label class="form-label-os" for="prd_nome">Descrição do Produto (Sairá na NF-e) *</label>
-                    <input type="text" name="nome" id="prd_nome" class="form-control-os" placeholder="Nome completo da mercadoria" required>
-                </div>
+                    <div class="col-md-6">
+                        <label class="form-label-os" for="prd_nome">Descrição do Produto (Sairá na NF-e) *</label>
+                        <input type="text" name="nome" id="prd_nome" class="form-control-os" placeholder="Nome completo da mercadoria" required>
+                    </div>
 
-                <div class="col-md-5">
-                    <label class="form-label-os" for="prd_categoria">Categoria / Grupo</label>
-                    <input type="text" name="categoria" id="prd_categoria" class="form-control-os" placeholder="Ex: Equipamentos, Peças, Insumos…">
-                </div>
+                    <div class="col-md-5">
+                        <label class="form-label-os" for="prd_categoria">Categoria / Grupo</label>
+                        <input type="text" name="categoria" id="prd_categoria" class="form-control-os" placeholder="Ex: Equipamentos, Peças, Insumos…">
+                    </div>
 
-                <div class="col-md-4">
-                    <label class="form-label-os" for="prd_unidade">Unidade Comercial / Tributável *</label>
-                    <select name="unidade" id="prd_unidade" class="form-select-os">
-                        <?php foreach ($unidadesMedida as $sigla => $desc): ?>
-                            <option value="<?= $sigla ?>"><?= Security::e($desc) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
+                    <div class="col-md-4">
+                        <label class="form-label-os" for="prd_unidade">Unidade Comercial / Tributável *</label>
+                        <select name="unidade" id="prd_unidade" class="form-select-os">
+                            <?php foreach ($unidadesMedida as $sigla => $desc): ?>
+                                <option value="<?= $sigla ?>"><?= Security::e($desc) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_ativo">Situação</label>
-                    <select name="ativo" id="prd_ativo" class="form-select-os">
-                        <option value="1">Ativo</option>
-                        <option value="0">Inativo</option>
-                    </select>
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_ativo">Situação</label>
+                        <select name="ativo" id="prd_ativo" class="form-select-os">
+                            <option value="1">Ativo</option>
+                            <option value="0">Inativo</option>
+                        </select>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Seção 2: Formação de Preço e Estoque -->
-            <div class="kl" style="color:#0E9F6E;font-weight:800;text-transform:uppercase;margin-bottom:10px;border-top:1px solid var(--border);padding-top:14px">
-                2. Preços, Margem e Estoque
+            <!-- Card 2: Preços, Margem e Estoque -->
+        <div class="card mb-4">
+            <div class="card-header" style="background: transparent; border-bottom: 1px solid var(--border); padding: 8px 12px;">
+                <div class="kl" style="color:#0E9F6E;font-weight:700;">2. PREÇOS, MARGEM E ESTOQUE</div>
             </div>
-            <div class="row g-3" style="margin-bottom:18px">
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_preco_custo">Preço de Custo (R$)</label>
-                    <input type="text" name="preco_custo" id="prd_preco_custo" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularPrecoVenda()">
-                </div>
+            <div class="card-body" style="padding: 20px;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_preco_custo">Preço de Custo (R$)</label>
+                        <input type="text" name="preco_custo" id="prd_preco_custo" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularPrecoVenda()">
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_margem_lucro">Margem de Lucro (%)</label>
-                    <input type="text" name="margem_lucro" id="prd_margem_lucro" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularPrecoVenda()">
-                </div>
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_margem_lucro">Margem de Lucro (%)</label>
+                        <input type="text" name="margem_lucro" id="prd_margem_lucro" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularPrecoVenda()">
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_preco_venda">Preço de Venda (R$) *</label>
-                    <input type="text" name="preco_venda" id="prd_preco_venda" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularMargemLucro()" required>
-                </div>
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_preco_venda">Preço de Venda (R$) *</label>
+                        <input type="text" name="preco_venda" id="prd_preco_venda" class="form-control-os" data-mask="money" value="0,00" oninput="recalcularMargemLucro()" required>
+                    </div>
 
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_estoque_atual">Estoque Atual</label>
-                    <input type="number" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" min="0" step="0.01" value="0">
-                </div>
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_estoque_atual">Estoque Atual</label>
+                        <input type="number" name="estoque_atual" id="prd_estoque_atual" class="form-control-os" min="0" step="0.01" value="0">
+                    </div>
 
-                <div class="col-md-4">
-                    <label class="form-label-os" for="prd_estoque_minimo">Estoque Mínimo (Alerta)</label>
-                    <input type="number" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" min="0" step="0.01" value="0">
-                </div>
+                    <div class="col-md-4">
+                        <label class="form-label-os" for="prd_estoque_minimo">Estoque Mínimo (Alerta)</label>
+                        <input type="number" name="estoque_minimo" id="prd_estoque_minimo" class="form-control-os" min="0" step="0.01" value="0">
+                    </div>
 
-                <div class="col-md-4">
-                    <label class="form-label-os" for="prd_peso_liquido">Peso Líquido (kg - p/ NF-e)</label>
-                    <input type="text" name="peso_liquido" id="prd_peso_liquido" class="form-control-os" data-mask="money" value="0,00">
-                </div>
+                    <div class="col-md-4">
+                        <label class="form-label-os" for="prd_peso_liquido">Peso Líquido (kg - p/ NF-e)</label>
+                        <input type="text" name="peso_liquido" id="prd_peso_liquido" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
 
-                <div class="col-md-4">
-                    <label class="form-label-os" for="prd_peso_bruto">Peso Bruto (kg - p/ NF-e)</label>
-                    <input type="text" name="peso_bruto" id="prd_peso_bruto" class="form-control-os" data-mask="money" value="0,00">
-                </div>
-            </div>
-
-            <!-- Seção 3: Tributação Fiscal (NF-e / NFC-e) -->
-            <div class="kl" style="color:#0E9F6E;font-weight:800;text-transform:uppercase;margin-bottom:10px;border-top:1px solid var(--border);padding-top:14px">
-                3. Dados Fiscais e Tributação (NF-e / NFC-e)
-            </div>
-            <div class="row g-3" style="margin-bottom:18px">
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_ncm">NCM (8 dígitos) *</label>
-                    <input type="text" name="ncm" id="prd_ncm" class="form-control-os" maxlength="8" placeholder="Ex: 84713012">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_cest">CEST (7 dígitos - se ST)</label>
-                    <input type="text" name="cest" id="prd_cest" class="form-control-os" maxlength="7" placeholder="Opcional">
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label-os" for="prd_origem">Origem da Mercadoria (ICMS) *</label>
-                    <select name="origem" id="prd_origem" class="form-select-os">
-                        <option value="0">0 - Nacional</option>
-                        <option value="1">1 - Estrangeira (Importação direta)</option>
-                        <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
-                        <option value="3">3 - Nacional com conteúdo de importação &gt; 40%</option>
-                        <option value="4">4 - Nacional (Processos produtivos básicos)</option>
-                        <option value="5">5 - Nacional com conteúdo de importação &lt;= 40%</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_cfop_interno">CFOP Estadual *</label>
-                    <input type="text" name="cfop_interno" id="prd_cfop_interno" class="form-control-os" maxlength="4" value="5102">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_cfop_externo">CFOP Interestadual *</label>
-                    <input type="text" name="cfop_externo" id="prd_cfop_externo" class="form-control-os" maxlength="4" value="6102">
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label-os" for="prd_csosn_cst">CSOSN (Simples Nacional) / CST ICMS *</label>
-                    <select name="csosn_cst" id="prd_csosn_cst" class="form-select-os">
-                        <option value="102">102 - Tributada pelo Simples Nacional sem permissão de crédito</option>
-                        <option value="101">101 - Tributada pelo Simples Nacional com permissão de crédito</option>
-                        <option value="500">500 - ICMS cobrado anteriormente por Substituição Tributária (ST)</option>
-                        <option value="400">400 - Não tributada pelo Simples Nacional</option>
-                        <option value="00">00 - (Regime Normal) Tributada integralmente</option>
-                        <option value="60">60 - (Regime Normal) ICMS cobrado anteriormente por ST</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_cst_pis">CST PIS</label>
-                    <select name="cst_pis" id="prd_cst_pis" class="form-select-os">
-                        <option value="07">07 - Operação Isenta</option>
-                        <option value="01">01 - Alíquota Básica</option>
-                        <option value="49">49 - Outras Operações Saída</option>
-                        <option value="99">99 - Outras Operações</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_aliq_pis">Alíquota PIS (%)</label>
-                    <input type="text" name="aliq_pis" id="prd_aliq_pis" class="form-control-os" data-mask="money" value="0,00">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_cst_cofins">CST COFINS</label>
-                    <select name="cst_cofins" id="prd_cst_cofins" class="form-select-os">
-                        <option value="07">07 - Operação Isenta</option>
-                        <option value="01">01 - Alíquota Básica</option>
-                        <option value="49">49 - Outras Operações Saída</option>
-                        <option value="99">99 - Outras Operações</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_aliq_cofins">Alíquota COFINS (%)</label>
-                    <input type="text" name="aliq_cofins" id="prd_aliq_cofins" class="form-control-os" data-mask="money" value="0,00">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_aliq_icms">Alíquota ICMS (%)</label>
-                    <input type="text" name="aliq_icms" id="prd_aliq_icms" class="form-control-os" data-mask="money" value="0,00">
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label-os" for="prd_aliq_ipi">Alíquota IPI (%)</label>
-                    <input type="text" name="aliq_ipi" id="prd_aliq_ipi" class="form-control-os" data-mask="money" value="0,00">
-                </div>
-
-                <div class="col-md-6">
-                    <label class="form-label-os" for="prd_observacoes">Informações Adicionais do Produto (Sairá na NF-e se preenchido)</label>
-                    <input type="text" name="observacoes" id="prd_observacoes" class="form-control-os" placeholder="Ex: Número de série, lote ou garantia…">
+                    <div class="col-md-4">
+                        <label class="form-label-os" for="prd_peso_bruto">Peso Bruto (kg - p/ NF-e)</label>
+                        <input type="text" name="peso_bruto" id="prd_peso_bruto" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border)">
+            <!-- Card 3: Dados Fiscais -->
+            <div class="card mb-4">
+              <div class="card-header" style="background: transparent; border-bottom: 1px solid var(--border); padding: 8px 12px;">
+                <div class="kl" style="color:#0E9F6E;font-weight:700;">3. DADOS FISCAIS E TRIBUTAÇÃO</div>
+              </div>
+              <div class="card-body" st极="padding: 20px;">
+                <div class="row g-3" style="margin-bottom:18px">
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_ncm">NCM (8 dígitos) *</label>
+                        <input type="text" name="ncm" id="prd_ncm" class="form-control-os" maxlength="8" placeholder="Ex: 84713012">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_cest">CEST (7 dígitos - se ST)</label>
+                        <input type="text" name="cest" id="prd_cest" class="form-control-os" maxlength="7" placeholder="Opcional">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label-os" for="prd_origem">Origem da Mercadoria (ICMS) *</label>
+                        <select name="origem" id="prd_origem" class="form-select-os">
+                            <option value="0">0 - Nacional</option>
+                            <option value="1">1 - Estrangeira (Importação direta)</option>
+                            <option value="2">2 - Estrangeira (Adquirida no mercado interno)</option>
+                            <option value="3">3 - Nacional com conteúdo de importação &gt; 40%</option>
+                            <option value="4">4 - Nacional (Processos produtivos básicos)</option>
+                            <option value="5">5 - Nacional com conteúdo de importação &lt;= 40%</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_cfop_interno">CFOP Estadual *</label>
+                        <input type="text" name="cfop_interno" id="prd_cfop_interno" class="form-control-os" maxlength="4" value="5102">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_cfop_externo">CFOP Interestadual *</label>
+                        <input type="text" name="cfop_externo" id="prd_cfop_externo" class="form-control-os" maxlength="4" value="6102">
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label-os" for="prd_csosn_cst">CSOSN (Simples Nacional) / CST ICMS *</label>
+                        <select name="csosn_cst" id="prd_csosn_cst" class="form-select-os">
+                            <option value="102">102 - Tributada pelo Simples Nacional sem permissão de crédito</option>
+                            <option value="101">101 - Tributada pelo Simples Nacional com permissão de crédito</option>
+                            <option value="500">500 - ICMS cobrado anteriormente por Substituição Tributária (ST)</option>
+                            <option value="400">400 - Não tributada pelo Simples Nacional</option>
+                            <option value="00">00 - (Regime Normal) Tributada integralmente</option>
+                            <option value="60">60 - (Regime Normal) ICMS cobrado anteriormente por ST</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_cst_pis">CST PIS</label>
+                        <select name="cst_pis" id="prd_cst_pis" class="form-select-os">
+                            <option value="07">07 - Operação Isenta</option>
+                            <option value="01">01 - Alíquota Básica</option>
+                            <option value="49">49 - Outras Operações Saída</option>
+                            <option value="99">99 - Outras Operações</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_aliq_pis">Alíquota PIS (%)</label>
+                        <input type="text" name="aliq_pis" id="prd_aliq_pis" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_cst_cofins">CST COFINS</label>
+                        <select name="cst_cofins" id="prd_cst_cofins" class="form-select-os">
+                            <option value="07">07 - Operação Isenta</option>
+                            <option value="01">01 - Alíquota Básica</option>
+                            <option value="49">49 - Outras Operações Saída</option>
+                            <option value="99">99 - Outras Operações</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_aliq_cofins">Alíquota COFINS (%)</label>
+                        <input type="text" name="aliq_cofins" id="prd_aliq_cofins" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_aliq_icms">Alíquota ICMS (%)</label>
+                        <input type="text" name="aliq_icms" id="prd_aliq_icms" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label-os" for="prd_aliq_ipi">Alíquota IPI (%)</label>
+                        <input type="text" name="aliq_ipi" id="prd_aliq_ipi" class="form-control-os" data-mask="money" value="0,00">
+                    </div>
+
+                    <div class="col-12">  <!-- Alterado para col-12 para largura total -->
+                        <label class="form-label-os" for="prd_observacoes">Informações Adicionais do Produto (Sairá na NF-e se preenchido)</label>
+                        <input type="text" name="observacoes" id="prd_observacoes" class="form-control-os" placeholder="Ex: Número de série, lote ou garantia…">
+                    </div>
+                </div>
+              </div>
+              <!-- Card Footer para botões -->
+              <div class="card-footer" style="display:flex;justify-content:flex-end;gap:10px;padding:16px;">
                 <button type="button" class="btn-theme" onclick="fecharModalProduto()">Cancelar</button>
                 <button type="submit" class="btn-primary-brand">Salvar Produto</button>
+              </div>
             </div>
+
         </form>
     </div>
 </div>
@@ -876,7 +892,7 @@ function abrirModalProduto() {
     document.getElementById('prd_margem_lucro').value = '0,00';
     document.getElementById('prd_preco_venda').value = '0,00';
     document.getElementById('prd_estoque_atual').value = '0';
-    document.getElementById('prd_estoque_minimo').value = '0';
+    document.getElementById('prd_estoque_minimo').value = '极';
     document.getElementById('prd_peso_liquido').value = '0,00';
     document.getElementById('prd_peso_bruto').value = '0,00';
     document.getElementById('prd_cfop_interno').value = '5102';
